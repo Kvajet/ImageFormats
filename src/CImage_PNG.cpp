@@ -18,9 +18,7 @@ bool CImage_PNG::Load()
         return false;
     }
 
-    size_t tmp = 0;
-
-    while( tmp < 4 )
+    while( true )
     {
         m_file.Read( m_chunkLenBuffer  );
         m_file.Read( m_chunkNameBuffer );
@@ -28,17 +26,16 @@ bool CImage_PNG::Load()
         switch( m_chunkNameBuffer )
         {
             // IDAT - 0x49444154
-            case 0x49444154: if( ! ReadIDAT() ) return false; break;
+            case 0x49444154: if( ! m_idat.Load( m_chunkLenBuffer , m_file ) ) return false; break;
             // IEND - 0x49454e44
             case 0x49454e44: std::cout << "END\n"; return true;
             // IHDR - 0x49484452
-            case 0x49484452: if( ! m_ihdr.Load( m_chunkLenBuffer , m_chunkNameBuffer , m_file ) ) return false; break;
+            case 0x49484452: if( ! m_ihdr.Load( m_chunkLenBuffer , m_file ) ) return false; break;
             // PLTE - 0x504c5445
             case 0x504c5445: if( ! ReadPLTE() ) return false; break;
             // DEFAULT
             default: CHUNK::UnknownChunk( m_chunkLenBuffer , m_chunkNameBuffer , m_file ); break;
         }
-        tmp++;
     }
 
     return true;
@@ -72,16 +69,6 @@ bool CImage_PNG::ReadPLTE()
     
     std::cout << "\033[1;31m[ERROR] PLTE is present but is not implemented (meaning: is different from values 2 or 6.).\033[0m\n";
     return false;
-}
-
-bool CImage_PNG::ReadIDAT()
-{
-    uint8_t dump;
-    for( size_t i = 0 ; i < m_chunkLenBuffer ; i++ ) m_file.Read( dump );
-    // m_file.Ignore( m_chunkLenBuffer );
-    uint32_t tmp;
-    m_file.Read( tmp );
-    return true;
 }
 
 bool CImage_PNG::ReadIEND()
@@ -123,6 +110,11 @@ void CImage_PNG::CHUNK::UnknownChunk( uint32_t m_chunkLenBuffer , uint32_t m_chu
     for( size_t i = 0 ; i < m_chunkLenBuffer + 4 ; i++ ) m_file.Read();
 }
 
+CImage_PNG::IHDR::IHDR()
+{
+    m_name = 0x49484452;
+}
+
 void CImage_PNG::IHDR::Print() const
 {
     PrintCommonChunkData();
@@ -142,10 +134,9 @@ void CImage_PNG::IHDR::PrintHex() const
                 << m_compressionMethod << m_filterMethod << m_interlaceMethod << m_CRC << "\n";
 }
 
-bool CImage_PNG::IHDR::Load( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file )
+bool CImage_PNG::IHDR::Load( uint32_t m_chunkLenBuffer , CFileHandler & m_file )
 {
     m_len = m_chunkLenBuffer;
-    m_name = m_chunkNameBuffer;
 
     m_file.Read( m_width             );
     m_file.Read( m_height            );
@@ -162,5 +153,24 @@ bool CImage_PNG::IHDR::Load( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuf
 
 void CImage_PNG::IHDR::ErrorMessage() const
 {
-    std::cout << "Invalid IHDR.\n";
+    std::cout << "\033[1;31mInvalid IHDR.\033[0m\n";
+}
+
+CImage_PNG::IDAT::IDAT()
+{
+    m_name = 0x49444154;
+}
+
+bool CImage_PNG::IDAT::Load( uint32_t m_chunkLenBuffer , CFileHandler & m_file )
+{
+    m_data = std::make_unique< uint8_t[] >( m_chunkLenBuffer );
+    for( size_t i = 0 ; i < m_chunkLenBuffer ; i++ ) m_data[ i ] = static_cast< uint8_t >( m_file.Read() );
+    for( size_t i = 0 ; i < 4 ; i++ ) m_file.Read();
+
+    return true;
+}
+
+void CImage_PNG::IDAT::ErrorMessage() const
+{
+    std::cout << "\033[1;31mInvalid IDAT.\033[0m\n";
 }

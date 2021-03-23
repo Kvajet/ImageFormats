@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <iomanip>
+#include <memory>
 #include "CFileHandler.h"
 
 /**
@@ -29,7 +30,7 @@ private:
         static void PrintAsciiName( uint32_t name );
         static void UnknownChunk( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file );
 
-        virtual bool Load( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file ) = 0;
+        virtual bool Load( uint32_t m_chunkLenBuffer , CFileHandler & m_file ) = 0;
         virtual void ErrorMessage() const = 0;
 
         uint32_t m_len  = 0x00000000;
@@ -49,10 +50,12 @@ private:
     */
     struct IHDR : public CHUNK
     {
+        IHDR();
+
         void Print() const;
         void PrintHex() const;
 
-        bool Load( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file ) override;
+        bool Load( uint32_t m_chunkLenBuffer , CFileHandler & m_file ) override;
         void ErrorMessage() const override;
 
         uint32_t m_width             = 0x00000000;
@@ -62,6 +65,16 @@ private:
         uint8_t  m_compressionMethod = 0x00;
         uint8_t  m_filterMethod      = 0x00;
         uint8_t  m_interlaceMethod   = 0x00;
+    };
+
+    struct IDAT : public CHUNK
+    {
+        IDAT();
+
+        bool Load( uint32_t m_chunkLenBuffer , CFileHandler & m_file ) override;
+        void ErrorMessage() const override;
+
+        std::unique_ptr< uint8_t[] > m_data;
     };
 
     bool ReadHeader();
@@ -78,6 +91,7 @@ private:
 
     // segments
     IHDR m_ihdr;
+    IDAT m_idat;
 
     uint32_t m_chunkLenBuffer = 0x00000000 , m_chunkNameBuffer = 0x00000000 , m_chunkCRCBuffer = 0x00000000;
 
