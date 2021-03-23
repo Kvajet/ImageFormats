@@ -26,7 +26,11 @@ private:
     {
         void PrintCommonChunkData() const;
         void PrintHexName( uint32_t name ) const;
-        void PrintAsciiName( uint32_t name ) const;
+        static void PrintAsciiName( uint32_t name );
+        static void UnknownChunk( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file );
+
+        virtual bool Load( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file ) = 0;
+        virtual void ErrorMessage() const = 0;
 
         uint32_t m_len  = 0x00000000;
         uint32_t m_name = 0x00000000;
@@ -47,6 +51,9 @@ private:
     {
         void Print() const;
         void PrintHex() const;
+
+        bool Load( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file ) override;
+        void ErrorMessage() const override;
 
         uint32_t m_width             = 0x00000000;
         uint32_t m_height            = 0x00000000;
