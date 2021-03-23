@@ -14,13 +14,16 @@ CFileHandler::~CFileHandler()
 
 char CFileHandler::Read()
 {
-    if( m_isOpen ) m_input.get( m_readBuffer );
+    if( m_isOpen )
+    {
+        m_input.get( m_readBuffer );
+    }
     return m_readBuffer;
 }
 
 void CFileHandler::Read( uint8_t & buffer )
 {
-    buffer = Read();
+    buffer = static_cast< unsigned char >( Read() );
 }
 
 void CFileHandler::Read( uint16_t & buffer )
@@ -29,7 +32,7 @@ void CFileHandler::Read( uint16_t & buffer )
     buffer = 0x0000;
     for( size_t i = 2 ; i ; i-- )
     {
-        innerbuffer = Read();
+        innerbuffer = static_cast< unsigned char >( Read() );
         buffer |= ( innerbuffer << ( 8 * ( i - 1 ) ) );
     }
 }
@@ -40,7 +43,7 @@ void CFileHandler::Read( uint32_t & buffer )
     buffer = 0x00000000;
     for( size_t i = 4 ; i ; i-- )
     {
-        innerbuffer = Read();
+        innerbuffer = static_cast< unsigned char >( Read() );
         buffer |= ( innerbuffer << ( 8 * ( i - 1 ) ) );
     }
 }
@@ -50,7 +53,12 @@ void CFileHandler::Read( uint64_t & buffer )
     uint64_t innerbuffer;
     for( size_t i = 8 ; i ; i-- )
     {
-        innerbuffer = Read();
+        innerbuffer = static_cast< unsigned char >( Read() );
         buffer |= ( innerbuffer << ( 8 * ( i - 1 ) ) );
     }
+}
+
+void CFileHandler::Ignore( size_t len )
+{
+    m_input.ignore( len );
 }

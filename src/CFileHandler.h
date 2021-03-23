@@ -17,6 +17,7 @@ public:
     void Read( uint16_t & buffer );
     void Read( uint32_t & buffer );
     void Read( uint64_t & buffer );
+    void Ignore( size_t len );
 
 private:
     const std::string m_fileName;

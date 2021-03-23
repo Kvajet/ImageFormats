@@ -20,7 +20,7 @@ bool CImage_PNG::Load()
 
     size_t tmp = 0;
 
-    while( tmp < 2 )
+    while( tmp < 4 )
     {
         m_file.Read( m_chunkLenBuffer  );
         m_file.Read( m_chunkNameBuffer );
@@ -28,26 +28,14 @@ bool CImage_PNG::Load()
         switch( m_chunkNameBuffer )
         {
             // IDAT - 0x49444154
-            case 0x49444154:
-            {
-                ReadIDAT();
-            } break;
-
+            case 0x49444154: if( ! ReadIDAT() ) return false; break;
             // IEND - 0x49454e44
-            case 0x49454e44:
-                return true;
-
+            case 0x49454e44: std::cout << "END\n"; return true;
             // IHDR - 0x49484452
             case 0x49484452: if( ! m_ihdr.Load( m_chunkLenBuffer , m_chunkNameBuffer , m_file ) ) return false; break;
             // PLTE - 0x504c5445
-            case 0x504c5445:
-            {
-                if( ! ReadPLTE() )
-                {
-                    std::cout << "PLTE is present but is not implemented.\n";
-                    return false;
-                }
-            } break;
+            case 0x504c5445: if( ! ReadPLTE() ) return false; break;
+            // DEFAULT
             default: CHUNK::UnknownChunk( m_chunkLenBuffer , m_chunkNameBuffer , m_file ); break;
         }
         tmp++;
@@ -81,6 +69,8 @@ bool CImage_PNG::ReadIHDR()
 bool CImage_PNG::ReadPLTE()
 {
     if( m_ihdr.m_colorType == 2 || m_ihdr.m_colorType == 6 ) return true;
+    
+    std::cout << "\033[1;31m[ERROR] PLTE is present but is not implemented (meaning: is different from values 2 or 6.).\033[0m\n";
     return false;
 }
 
@@ -88,6 +78,9 @@ bool CImage_PNG::ReadIDAT()
 {
     uint8_t dump;
     for( size_t i = 0 ; i < m_chunkLenBuffer ; i++ ) m_file.Read( dump );
+    // m_file.Ignore( m_chunkLenBuffer );
+    uint32_t tmp;
+    m_file.Read( tmp );
     return true;
 }
 
@@ -116,10 +109,10 @@ void CImage_PNG::CHUNK::PrintHexName( uint32_t name ) const
 
 void CImage_PNG::CHUNK::PrintAsciiName( uint32_t name )
 {
-    std::cout << static_cast< char >( ( name & 0xFF000000 ) >> 24 )
+    std::cout << static_cast< char >( (   name & 0xFF000000 ) >> 24 )
                 << static_cast< char >( ( name & 0x00FF0000 ) >> 16 )
                 << static_cast< char >( ( name & 0x0000FF00 ) >>  8 )
-                << static_cast< char >( name & 0x000000FF ) << "\n";
+                << static_cast< char >(   name & 0x000000FF ) << "\n";
 }
 
 void CImage_PNG::CHUNK::UnknownChunk( uint32_t m_chunkLenBuffer , uint32_t m_chunkNameBuffer , CFileHandler & m_file )
