@@ -1,9 +1,9 @@
 #include <iostream>
-#include "CImage_PNG.cpp"
+#include "CImage_PNG.h"
 
 int main( void )
 {
-    CImage_PNG image( "tower-main.png" );
+    CImage_PNG image( "images/tower-main.png" );
     image.Load();
 
     return 0;
